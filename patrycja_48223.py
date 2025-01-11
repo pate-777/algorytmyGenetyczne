@@ -99,6 +99,19 @@ def test_krzyzowania(chromosom1, chromosom2, funkcja_krzyzowania):
     print(f" chromosom1: {chromosom1}, chromosom2: {chromosom2}, potomostwo: {potomstwo}")
     print(f"Test krzyżowania {funkcja_krzyzowania.__name__} zakończony sukcesem")
 
+def zmierz_roznorodnosc_populacji(populacja):
+    unikalne_chromosomy = set(tuple(chromosom) for chromosom in populacja)
+    return len(unikalne_chromosomy) / len(populacja)
+
+def test_mutacji(populacja, prawdopodobienstwo_mutacji, liczba_iteracji):
+    roznorodnosc_na_iteracje = []
+    for _ in range(liczba_iteracji):
+        populacja = [mutacja_punktowa(chromosom, prawdopodobienstwo_mutacji) for chromosom in populacja]
+        roznorodnosc = zmierz_roznorodnosc_populacji(populacja)
+        roznorodnosc_na_iteracje.append(roznorodnosc)
+    return roznorodnosc_na_iteracje
+
+
 def main():
     with open(DATA_FILE) as csv_file:
         for i, linia in enumerate(list(csv_file)):
@@ -120,13 +133,22 @@ def main():
             print(f"  Suma dostosowania: {suma_dostosowania_ruletka}, Czas wykonania: {czas_ruletka} ns")
 
             # Testy krzyżowania
-            # chromosom1 = populacja[0]
-            # chromosom2 = populacja[1]
-            chromosom1 = [1, 0 ,1, 0, 1]
-            chromosom2 = [0, 1 ,0, 1, 1]
+            chromosom1 = populacja[0]
+            chromosom2 = populacja[1]
+            # chromosom1 = [1, 0 ,1, 0, 1]
+            # chromosom2 = [0, 1 ,0, 1, 1]
             print("\n  Testy krzyżowania:")
             test_krzyzowania(chromosom1, chromosom2, krzyzowanie_a)
-            # test_krzyzowania(chromosom1, chromosom2, krzyzowanie_b)
+            test_krzyzowania(chromosom1, chromosom2, krzyzowanie_b)
+
+            # Punkt 6: Zbadanie wpływu mutacji
+            print("\nZbadanie wpływu mutacji na różnorodność populacji:")
+            prawdopodobienstwo_mutacji = 0.1
+            liczba_iteracji = 10
+            print(f" Rożnorodność początkowa: {zmierz_roznorodnosc_populacji(populacja):.2f}")
+            roznorodnosc = test_mutacji(populacja, prawdopodobienstwo_mutacji, liczba_iteracji)
+            for iteracja, r in enumerate(roznorodnosc):
+                print(f"Iteracja {iteracja + 1}: Różnorodność = {r:.2f}")
 
 if __name__ == "__main__":
     main()
