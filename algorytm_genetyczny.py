@@ -2,6 +2,14 @@ import random
 import pprint
 from typing import Callable, Dict, List, Tuple
 
+class WynikPokolenia:
+    def __init__(self, najlepszy: int, najgorszy: int, sredni: float) -> None:
+        self.najlepszy = najlepszy
+        self.najgorszy = najgorszy
+        self.sredni = sredni
+
+    def __repr__(self) -> str:
+        return f"WynikPokolenia(najlepszy={self.najlepszy}, najgorszy={self.najgorszy}, sredni={self.sredni})"
 
 def krzyzowanie_jednopunktowe(populacja: List[List[int]]) -> List[List[int]]: 
     nowa_populacja = []
@@ -90,6 +98,7 @@ class AlgorytmGenetyczny:
         self.selekcja = selekcja
         self.mutacja = mutacja
         self.wyniki_dostosowania_dict = {tuple(chromosom): self.funkcja_dostosowania(chromosom, wartosci, wagi, maks_pojemnosc) for chromosom in self.populacja}
+        self.prawdopodobienstwo_mutacji = prawdopodobienstwo_mutacji
 
     def generuj_poczatkowa_populacje(self,rozmiar_populacji: int, liczba_przedmiotow: int) -> List[List[int]]:
         populacja = []
@@ -115,17 +124,26 @@ class AlgorytmGenetyczny:
             return 0
         return suma_wartosci
 
-    def przeprowadz_algorytm(self, liczba_generacji: int) -> List[int]:
-        for generacja in range(1, liczba_generacji + 1):
-            
+    def przeprowadz_algorytm(self, liczba_generacji: int) -> Tuple[List[int], List[WynikPokolenia]]:
+        wyniki_pokolen = []
+        for _ in range(1, liczba_generacji + 1):
             populacja_selekcja = self.selekcja(self.populacja, self.wyniki_dostosowania_dict)
             populacja_krzyzowanie = self.krzyzowanie(populacja_selekcja)
-            populacja_mutacja = self.mutacja(populacja_krzyzowanie, 0.01)
+            populacja_mutacja = self.mutacja(populacja_krzyzowanie, self.prawdopodobienstwo_mutacji)
             nowa_populacja = populacja_mutacja
             
             self.wyniki_dostosowania_dict = {tuple(chromosom): self.funkcja_dostosowania(chromosom, self.wartosci, self.wagi, self.maks_pojemnosc) for chromosom in nowa_populacja}
             self.populacja = nowa_populacja
+            
             najlepszy_chromosom = max(self.populacja, key=lambda chromosom: self.wyniki_dostosowania_dict[tuple(chromosom)])
-            print(f"Generacja { generacja} Najlepszy chromosom: {najlepszy_chromosom}, wartość: {self.wyniki_dostosowania_dict[tuple(najlepszy_chromosom)]}")
+            najgorszy_chromosom = min(self.populacja, key=lambda chromosom: self.wyniki_dostosowania_dict[tuple(chromosom)])
+            srednia_wartosc = sum(self.wyniki_dostosowania_dict[tuple(chromosom)] for chromosom in self.populacja) / len(self.populacja)
+            
+            wynik_pokolenia = WynikPokolenia(
+                najlepszy=self.wyniki_dostosowania_dict[tuple(najlepszy_chromosom)],
+                najgorszy=self.wyniki_dostosowania_dict[tuple(najgorszy_chromosom)],
+                sredni=srednia_wartosc
+            )
+            wyniki_pokolen.append(wynik_pokolenia)
         
-        return najlepszy_chromosom
+        return najlepszy_chromosom, wyniki_pokolen
