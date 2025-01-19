@@ -124,9 +124,9 @@ class AlgorytmGenetyczny:
             return 0
         return suma_wartosci
 
-    def przeprowadz_algorytm(self, liczba_generacji: int) -> Tuple[List[int], List[WynikPokolenia]]:
+    def przeprowadz_algorytm(self, liczba_generacji: int, minimalna_wartosc_dostosowania: int = None) -> Tuple[List[int], List[WynikPokolenia]]:
         wyniki_pokolen = []
-        for _ in range(1, liczba_generacji + 1):
+        for generacja in range(1, liczba_generacji + 1):
             populacja_selekcja = self.selekcja(self.populacja, self.wyniki_dostosowania_dict)
             populacja_krzyzowanie = self.krzyzowanie(populacja_selekcja)
             populacja_mutacja = self.mutacja(populacja_krzyzowanie, self.prawdopodobienstwo_mutacji)
@@ -145,5 +145,10 @@ class AlgorytmGenetyczny:
                 sredni=srednia_wartosc
             )
             wyniki_pokolen.append(wynik_pokolenia)
+            
+            # Check additional exit condition
+            if minimalna_wartosc_dostosowania is not None and self.wyniki_dostosowania_dict[tuple(najlepszy_chromosom)] >= minimalna_wartosc_dostosowania:
+                print(f"Warunek wyjścia spełniony w generacji {generacja}")
+                break
         
         return najlepszy_chromosom, wyniki_pokolen
