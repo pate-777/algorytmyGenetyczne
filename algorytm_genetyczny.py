@@ -1,18 +1,16 @@
 import random
-import time
-import datetime
 import pprint
 from typing import Callable, Dict, List, Tuple
 
 
-def krzyzowanie_a(chromosom1: List[int], chromosom2: List[int]) -> List[int]: 
+def krzyzowanie_jednopunktowe(chromosom1: List[int], chromosom2: List[int]) -> List[int]: 
     if len(chromosom1) != len(chromosom2):
         raise ValueError("Chromosomy muszą mieć taką samą długość")
     dlugosc = len(chromosom1)
     punkt_podzialu = dlugosc // 2
     return chromosom1[:punkt_podzialu] + chromosom2[punkt_podzialu:]
 
-def krzyzowanie_b(chromosom1: List[int], chromosom2: List[int]) -> List[int]:
+def krzyzowanie_jednorodne(chromosom1: List[int], chromosom2: List[int]) -> List[int]:
     if len(chromosom1) != len(chromosom2):
         raise ValueError("Chromosomy muszą mieć taką samą długość")
     potomstwo = []
@@ -65,7 +63,7 @@ class AlgorytmGenetyczny:
                   maks_pojemnosc: int,
                   krzyzowanie: Callable[[List[int], List[int]], List[int]],
                   selekcja: Callable[[List[List[int]], Dict[Tuple[int], int]], List[List[int]]],
-                  mutacja):
+                  mutacja: Callable[[List[List[int]], float], List[int]]):
         self.populacja = self.generuj_poczatkowa_populacje(rozmiar_populacji, liczba_przedmiotow)
         self.wagi = wagi
         self.wartosci = wartosci
@@ -98,3 +96,20 @@ class AlgorytmGenetyczny:
         if suma_wag > maks_pojemnosc:
             return 0
         return suma_wartosci
+
+    def przeprowadz_algorytm(self, liczba_generacji: int) -> List[int]:
+        for _ in range(liczba_generacji):
+            nowa_populacja = []
+            for _ in range(len(self.populacja) // 2):
+                rodzic1 = random.choice(self.populacja)
+                rodzic2 = random.choice(self.populacja)
+                dziecko1 = self.krzyzowanie(rodzic1, rodzic2)
+                dziecko2 = self.krzyzowanie(rodzic2, rodzic1)
+                nowa_populacja.extend([dziecko1, dziecko2])
+            
+            nowa_populacja = [self.mutacja(chromosom, 0.01) for chromosom in nowa_populacja]
+            self.wyniki_dostosowania_dict = {tuple(chromosom): self.funkcja_dostosowania(chromosom, self.wartosci, self.wagi, self.maks_pojemnosc) for chromosom in nowa_populacja}
+            self.populacja = self.selekcja(nowa_populacja, self.wyniki_dostosowania_dict)
+        
+        najlepszy_chromosom = max(self.populacja, key=lambda chromosom: self.wyniki_dostosowania_dict[tuple(chromosom)])
+        return najlepszy_chromosom
